@@ -110,6 +110,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    // Enable Swagger in production for API documentation
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "HSS Training ERP API V1");
+        c.RoutePrefix = "swagger"; // Serve Swagger UI at /swagger
+    });
+}
 
 app.UseHttpsRedirection();
 
