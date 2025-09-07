@@ -1,0 +1,38 @@
+# Example Terraform Variables File
+# Copy this file to terraform.tfvars and update with your values
+
+# Azure Resource Configuration
+resource_group_name     = "hss-training-rg"
+location               = "East US"
+web_app_name          = "hss-training-erp-api"
+app_service_plan_name = "hss-training-asp"
+sku_name              = "B1"
+
+# Environment Configuration
+environment = "production"
+
+# Database Configuration
+postgresql_connection_string = "Server=hss-training.postgres.database.azure.com;Database=hsstraining;Port=5432;User Id=adminuser;Password=YOUR_PASSWORD;Ssl Mode=Require;Search Path=tms,public;"
+
+# Teams App Configuration
+teams_app_production_url = "https://your-teams-app.azurewebsites.net"
+
+# Feature Flags
+enable_staging_slot        = true
+enable_application_insights = true
+always_on                 = true
+https_only                = true
+
+# Monitoring Configuration
+log_retention_days = 7
+health_check_path  = "/health"
+
+# Tags
+tags = {
+  Project     = "HSS-Training-ERP"
+  Component   = "Backend-API"
+  Environment = "production"
+  ManagedBy   = "Terraform"
+  Owner       = "HSS-Training-Team"
+  CostCenter  = "IT-Training"
+}

@@ -1,0 +1,131 @@
+name: Deploy HSS Training ERP API to Azure
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: 'hss-training-erp-api'
+  AZURE_WEBAPP_PACKAGE_PATH: './HSS.ERP.API'
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore HSS.ERP.API.sln
+
+    - name: Build application
+      run: dotnet build HSS.ERP.API.sln --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test HSS.ERP.API.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: |
+          **/TestResults/**/*
+          **/coverage.cobertura.xml
+
+    - name: Publish application
+      run: dotnet publish ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/HSS.ERP.API.csproj --configuration Release --output ./publish
+
+    - name: Upload artifact for deployment job
+      uses: actions/upload-artifact@v3
+      with:
+        name: dotnet-app
+        path: ./publish
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    environment: Production
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Download artifact from build job
+      uses: actions/download-artifact@v3
+      with:
+        name: dotnet-app
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: .
+
+    - name: Run Health Check
+      run: |
+        echo "Waiting for application to start..."
+        sleep 30
+        
+        # Health check endpoint
+        HEALTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health"
+        
+        for i in {1..5}; do
+          echo "Health check attempt $i..."
+          if curl -f -s "$HEALTH_URL" > /dev/null; then
+            echo "✅ Application is healthy!"
+            break
+          elif [ $i -eq 5 ]; then
+            echo "❌ Application health check failed after 5 attempts"
+            exit 1
+          else
+            echo "⏳ Health check failed, retrying in 15 seconds..."
+            sleep 15
+          fi
+        done
+
+    - name: Verify API Endpoints
+      run: |
+        BASE_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+        
+        # Test Swagger endpoint
+        echo "Testing Swagger endpoint..."
+        curl -f -s "$BASE_URL/swagger/index.html" > /dev/null && echo "✅ Swagger is accessible" || echo "⚠️  Swagger endpoint not accessible"
+        
+        # Test API endpoints that don't require authentication
+        echo "Testing API endpoints..."
+        curl -f -s "$BASE_URL/api/health" > /dev/null && echo "✅ Health API is accessible" || echo "⚠️  Health API not accessible"
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Security Scan
+      uses: securecodewarrior/github-action-add-sarif@v1
+      with:
+        sarif-file: 'security-scan-results.sarif'
+      continue-on-error: true
+
+    - name: Dependency Check
+      run: |
+        dotnet list HSS.ERP.API.sln package --outdated --include-transitive > outdated-packages.txt || true
+        if [ -s outdated-packages.txt ]; then
+          echo "⚠️  Outdated packages found:"
+          cat outdated-packages.txt
+        else
+          echo "✅ All packages are up to date"
+        fi

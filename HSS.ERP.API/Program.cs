@@ -17,15 +17,27 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowTeamsApp",
         policy =>
         {
-            policy.WithOrigins(
-                    "https://localhost:53000", // Teams app local development
-                    "https://localhost:44302", // Teams app SSL port
-                    "https://*.teams.microsoft.com",
-                    "https://*.microsoft.com"
-                )
+            var allowedOrigins = new List<string>
+            {
+                "https://localhost:53000", // Teams app local development
+                "https://localhost:44302", // Teams app SSL port
+                "https://*.teams.microsoft.com",
+                "https://*.microsoft.com",
+                "https://teams.microsoft.com"
+            };
+
+            // Add production Teams app URL if configured
+            var teamsAppUrl = builder.Configuration["TeamsApp:ProductionUrl"];
+            if (!string.IsNullOrEmpty(teamsAppUrl))
+            {
+                allowedOrigins.Add(teamsAppUrl);
+            }
+
+            policy.WithOrigins(allowedOrigins.ToArray())
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowCredentials();
+                .AllowCredentials()
+                .SetIsOriginAllowedToAllowWildcardSubdomains(); // Allow wildcard subdomains for *.teams.microsoft.com
         });
 });
 
