@@ -37,8 +37,8 @@ namespace HSS.ERP.API.Tests.Builders
                 VatNumber = "GB123456789",
                 ContactFlagRaw = "Y",
                 VatFlagRaw = "Y",
-                NationNumber = "GB",
-                Discount = 0.0m,
+                NationNumber = 44,
+                Discount = 0.0f,
                 CustomerTypeCode = "STANDARD",
                 CustomerStatusCode = "ACTIVE"
             };
@@ -79,19 +79,19 @@ namespace HSS.ERP.API.Tests.Builders
         {
             _invoice = new Invoice
             {
-                InvoiceNumber = "INV-001",
+                InvoiceId = 1,
                 CustomerCode = "CUST001",
                 InvoiceCreateDate = DateTime.UtcNow,
-                InvoiceDueDate = DateTime.UtcNow.AddDays(30),
-                InvoiceTotal = 100.00m,
-                InvoiceStatus = "PENDING",
+                InvoiceEndDate = DateTime.UtcNow.AddDays(30),
+                InvoiceValue = 100.00m,
+                InvoiceStatusCode = "D",
                 InvoiceLines = new List<InvoiceLine>()
             };
         }
 
-        public InvoiceBuilder WithNumber(string number)
+        public InvoiceBuilder WithId(int id)
         {
-            _invoice.InvoiceNumber = number;
+            _invoice.InvoiceId = id;
             return this;
         }
 
@@ -103,13 +103,13 @@ namespace HSS.ERP.API.Tests.Builders
 
         public InvoiceBuilder WithTotal(decimal total)
         {
-            _invoice.InvoiceTotal = total;
+            _invoice.InvoiceValue = total;
             return this;
         }
 
         public InvoiceBuilder WithStatus(string status)
         {
-            _invoice.InvoiceStatus = status;
+            _invoice.InvoiceStatusCode = status;
             return this;
         }
 
@@ -136,43 +136,40 @@ namespace HSS.ERP.API.Tests.Builders
         {
             _invoiceLine = new InvoiceLine
             {
-                InvoiceNumber = "INV-001",
-                LineNumber = 1,
-                StockCode = "STOCK001",
+                InvoiceId = 1,
+                InvoiceLineLineNo = 1,
+                StockNo = 1,
                 StockName = "Test Product",
-                Quantity = 1,
-                UnitPrice = 100.00m,
-                LineTotal = 100.00m,
-                VatRate = 20.0m,
-                VatAmount = 20.0m
+                InvoiceLineQty = 1,
+                InvoiceLinePrice = 100.00m,
+                InvoiceLineCharge = 100.00m,
+                VatPercent = 20.0f
             };
         }
 
-        public InvoiceLineBuilder WithInvoiceNumber(string invoiceNumber)
+        public InvoiceLineBuilder WithInvoiceId(int invoiceId)
         {
-            _invoiceLine.InvoiceNumber = invoiceNumber;
+            _invoiceLine.InvoiceId = invoiceId;
             return this;
         }
 
-        public InvoiceLineBuilder WithStockCode(string stockCode)
+        public InvoiceLineBuilder WithStockNo(int stockNo)
         {
-            _invoiceLine.StockCode = stockCode;
+            _invoiceLine.StockNo = stockNo;
             return this;
         }
 
         public InvoiceLineBuilder WithQuantity(int quantity)
         {
-            _invoiceLine.Quantity = quantity;
-            _invoiceLine.LineTotal = quantity * _invoiceLine.UnitPrice;
-            _invoiceLine.VatAmount = _invoiceLine.LineTotal * (_invoiceLine.VatRate / 100);
+            _invoiceLine.InvoiceLineQty = quantity;
+            _invoiceLine.InvoiceLineCharge = quantity * _invoiceLine.InvoiceLinePrice;
             return this;
         }
 
         public InvoiceLineBuilder WithUnitPrice(decimal unitPrice)
         {
-            _invoiceLine.UnitPrice = unitPrice;
-            _invoiceLine.LineTotal = _invoiceLine.Quantity * unitPrice;
-            _invoiceLine.VatAmount = _invoiceLine.LineTotal * (_invoiceLine.VatRate / 100);
+            _invoiceLine.InvoiceLinePrice = unitPrice;
+            _invoiceLine.InvoiceLineCharge = _invoiceLine.InvoiceLineQty * unitPrice;
             return this;
         }
 
@@ -187,21 +184,18 @@ namespace HSS.ERP.API.Tests.Builders
         {
             _booking = new Booking
             {
-                BookingId = 1,
+                BookingNo = 1,
                 CustomerCode = "CUST001",
-                CourseCode = "COURSE001",
-                BookingDate = DateTime.UtcNow,
-                StartDate = DateTime.UtcNow.AddDays(30),
-                EndDate = DateTime.UtcNow.AddDays(32),
-                NumberOfDelegates = 1,
-                BookingStatus = "CONFIRMED",
+                BookingCreateDate = DateTime.UtcNow,
+                BookingExpiryDate = DateTime.UtcNow.AddDays(30),
+                BookingTypeCode = "C",
                 BookingLines = new List<BookingLine>()
             };
         }
 
-        public BookingBuilder WithId(int id)
+        public BookingBuilder WithNo(int bookingNo)
         {
-            _booking.BookingId = id;
+            _booking.BookingNo = bookingNo;
             return this;
         }
 
@@ -211,21 +205,21 @@ namespace HSS.ERP.API.Tests.Builders
             return this;
         }
 
-        public BookingBuilder WithCourseCode(string courseCode)
+        public BookingBuilder WithOrder(string order)
         {
-            _booking.CourseCode = courseCode;
+            _booking.BookingOrder = order;
             return this;
         }
 
         public BookingBuilder WithStatus(string status)
         {
-            _booking.BookingStatus = status;
+            _booking.BookingTypeCode = status;
             return this;
         }
 
-        public BookingBuilder WithDelegates(int numberOfDelegates)
+        public BookingBuilder WithContact(string contact)
         {
-            _booking.NumberOfDelegates = numberOfDelegates;
+            _booking.BookingContact = contact;
             return this;
         }
 
@@ -240,16 +234,20 @@ namespace HSS.ERP.API.Tests.Builders
         {
             _course = new Course
             {
+                CourseNo = 1,
                 CourseCode = "COURSE001",
                 CourseName = "Test Course",
-                CourseDescription = "A test course for unit testing",
-                Duration = 2,
-                Price = 500.00m,
+                CourseTypeCode = "C",
+                CourseDuration = 2.0m,
                 MaxDelegates = 10,
-                CourseCategory = "TRAINING",
-                CourseType = "CLASSROOM",
-                IsActive = true
+                CourseStatus = "A"
             };
+        }
+
+        public CourseBuilder WithNo(int courseNo)
+        {
+            _course.CourseNo = courseNo;
+            return this;
         }
 
         public CourseBuilder WithCode(string code)
@@ -264,27 +262,33 @@ namespace HSS.ERP.API.Tests.Builders
             return this;
         }
 
-        public CourseBuilder WithPrice(decimal price)
+        public CourseBuilder WithSupplierCost(decimal cost)
         {
-            _course.Price = price;
+            _course.SupplierCost = cost;
             return this;
         }
 
-        public CourseBuilder WithDuration(int duration)
+        public CourseBuilder WithDuration(decimal duration)
         {
-            _course.Duration = duration;
+            _course.CourseDuration = duration;
             return this;
         }
 
-        public CourseBuilder WithMaxDelegates(int maxDelegates)
+        public CourseBuilder WithMaxDelegates(short maxDelegates)
         {
             _course.MaxDelegates = maxDelegates;
             return this;
         }
 
+        public CourseBuilder AsActive()
+        {
+            _course.CourseStatus = "A";
+            return this;
+        }
+
         public CourseBuilder AsInactive()
         {
-            _course.IsActive = false;
+            _course.CourseStatus = "I";
             return this;
         }
 
@@ -299,15 +303,18 @@ namespace HSS.ERP.API.Tests.Builders
         {
             _stock = new Stock
             {
+                StockNo = 1,
                 StockCode = "STOCK001",
                 StockName = "Test Stock Item",
-                StockDescription = "A test stock item",
-                UnitPrice = 10.00m,
-                StockLevel = 100,
-                ReorderLevel = 10,
-                IsActive = true,
-                Category = "GENERAL"
+                StockLongName = "A test stock item",
+                StockStatus = "A"
             };
+        }
+
+        public StockBuilder WithNo(int stockNo)
+        {
+            _stock.StockNo = stockNo;
+            return this;
         }
 
         public StockBuilder WithCode(string code)
@@ -322,27 +329,15 @@ namespace HSS.ERP.API.Tests.Builders
             return this;
         }
 
-        public StockBuilder WithPrice(decimal price)
+        public StockBuilder AsActive()
         {
-            _stock.UnitPrice = price;
-            return this;
-        }
-
-        public StockBuilder WithStockLevel(int level)
-        {
-            _stock.StockLevel = level;
-            return this;
-        }
-
-        public StockBuilder WithReorderLevel(int level)
-        {
-            _stock.ReorderLevel = level;
+            _stock.StockStatus = "A";
             return this;
         }
 
         public StockBuilder AsInactive()
         {
-            _stock.IsActive = false;
+            _stock.StockStatus = "I";
             return this;
         }
 

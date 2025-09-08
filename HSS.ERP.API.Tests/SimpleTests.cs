@@ -34,18 +34,18 @@ namespace HSS.ERP.API.Tests
             // Arrange & Act
             var invoice = new Invoice
             {
-                InvoiceNumber = "INV001",
+                InvoiceId = 1,
                 CustomerCode = "CUST001",
                 InvoiceCreateDate = DateTime.UtcNow,
-                InvoiceTotal = 100.50m,
-                InvoiceStatus = "PAID"
+                InvoiceValue = 100.50m,
+                InvoiceStatusCode = "P"
             };
 
             // Assert
-            invoice.InvoiceNumber.Should().Be("INV001");
+            invoice.InvoiceNumber.Should().Be("1"); // Computed property from InvoiceId
             invoice.CustomerCode.Should().Be("CUST001");
-            invoice.InvoiceTotal.Should().Be(100.50m);
-            invoice.InvoiceStatus.Should().Be("PAID");
+            invoice.InvoiceValue.Should().Be(100.50m);
+            invoice.InvoiceStatusCode.Should().Be("P");
             invoice.InvoiceCreateDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         }
 
@@ -73,17 +73,17 @@ namespace HSS.ERP.API.Tests
             // Arrange
             var invoiceLine = new InvoiceLine
             {
-                InvoiceNumber = "INV001",
-                LineNumber = 1,
-                StockCode = "STOCK001",
-                Quantity = 5,
-                UnitPrice = 10.00m
+                InvoiceId = 1,
+                InvoiceLineLineNo = 1,
+                StockNo = 1,
+                InvoiceLineQty = 5,
+                InvoiceLinePrice = 10.00m
             };
 
-            // Act
-            invoiceLine.LineTotal = invoiceLine.Quantity * invoiceLine.UnitPrice;
+            // Act - Set the computed charge value
+            invoiceLine.InvoiceLineCharge = invoiceLine.InvoiceLineQty * invoiceLine.InvoiceLinePrice;
 
-            // Assert
+            // Assert - Use computed property
             invoiceLine.LineTotal.Should().Be(50.00m);
         }
 
@@ -96,14 +96,14 @@ namespace HSS.ERP.API.Tests
             // Arrange
             var invoiceLine = new InvoiceLine
             {
-                Quantity = quantity,
-                UnitPrice = unitPrice
+                InvoiceLineQty = quantity,
+                InvoiceLinePrice = unitPrice
             };
 
-            // Act
-            invoiceLine.LineTotal = invoiceLine.Quantity * invoiceLine.UnitPrice;
+            // Act - Set the computed charge value
+            invoiceLine.InvoiceLineCharge = invoiceLine.InvoiceLineQty * invoiceLine.InvoiceLinePrice;
 
-            // Assert
+            // Assert - Use computed property
             invoiceLine.LineTotal.Should().Be(expectedTotal);
         }
 

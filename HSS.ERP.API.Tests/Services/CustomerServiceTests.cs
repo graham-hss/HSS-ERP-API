@@ -294,17 +294,17 @@ namespace HSS.ERP.API.Tests.Services
             // Arrange
             var customer = TestDataBuilder.Customer().WithCode("CUST001").Build();
             var invoice1 = TestDataBuilder.Invoice()
-                .WithNumber("INV001")
+                .WithId(1)
                 .WithCustomerCode("CUST001")
                 .WithCreateDate(DateTime.UtcNow.AddDays(-1))
                 .Build();
             var invoice2 = TestDataBuilder.Invoice()
-                .WithNumber("INV002")
+                .WithId(2)
                 .WithCustomerCode("CUST001")
                 .WithCreateDate(DateTime.UtcNow.AddDays(-2))
                 .Build();
             var otherCustomerInvoice = TestDataBuilder.Invoice()
-                .WithNumber("INV003")
+                .WithId(3)
                 .WithCustomerCode("CUST002")
                 .Build();
 

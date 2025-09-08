@@ -75,44 +75,44 @@ namespace HSS.ERP.API.Tests.Fixtures
             var stockItems = new[]
             {
                 Builders.TestDataBuilder.Stock()
+                    .WithNo(1)
                     .WithCode("STOCK001")
                     .WithName("Test Product 1")
-                    .WithPrice(50.00m)
-                    .WithStockLevel(100)
                     .Build(),
                 Builders.TestDataBuilder.Stock()
+                    .WithNo(2)
                     .WithCode("STOCK002")
                     .WithName("Test Product 2")
-                    .WithPrice(75.00m)
-                    .WithStockLevel(50)
                     .Build(),
                 Builders.TestDataBuilder.Stock()
+                    .WithNo(3)
                     .WithCode("STOCK003")
                     .WithName("Out of Stock Product")
-                    .WithStockLevel(0)
-                    .WithReorderLevel(5)
                     .Build()
             };
 
-            context.Stock.AddRange(stockItems);
+            context.Stocks.AddRange(stockItems);
 
             // Add test courses
             var courses = new[]
             {
                 Builders.TestDataBuilder.Course()
+                    .WithNo(1)
                     .WithCode("COURSE001")
                     .WithName("Introduction to Safety")
-                    .WithPrice(200.00m)
+                    .WithSupplierCost(200.00m)
                     .WithDuration(1)
                     .Build(),
                 Builders.TestDataBuilder.Course()
+                    .WithNo(2)
                     .WithCode("COURSE002")
                     .WithName("Advanced Safety Training")
-                    .WithPrice(500.00m)
+                    .WithSupplierCost(500.00m)
                     .WithDuration(3)
                     .WithMaxDelegates(8)
                     .Build(),
                 Builders.TestDataBuilder.Course()
+                    .WithNo(3)
                     .WithCode("COURSE003")
                     .WithName("Inactive Course")
                     .AsInactive()
@@ -125,14 +125,14 @@ namespace HSS.ERP.API.Tests.Fixtures
             var invoices = new[]
             {
                 Builders.TestDataBuilder.Invoice()
-                    .WithNumber("INV-001")
+                    .WithId(1)
                     .WithCustomerCode("CUST001")
                     .WithTotal(100.00m)
                     .WithStatus("PAID")
                     .WithCreateDate(DateTime.UtcNow.AddDays(-30))
                     .Build(),
                 Builders.TestDataBuilder.Invoice()
-                    .WithNumber("INV-002")
+                    .WithId(2)
                     .WithCustomerCode("CUST002")
                     .WithTotal(250.00m)
                     .WithStatus("PENDING")
@@ -146,14 +146,14 @@ namespace HSS.ERP.API.Tests.Fixtures
             var invoiceLines = new[]
             {
                 Builders.TestDataBuilder.InvoiceLine()
-                    .WithInvoiceNumber("INV-001")
-                    .WithStockCode("STOCK001")
+                    .WithInvoiceId(1)
+                    .WithStockNo(1)
                     .WithQuantity(2)
                     .WithUnitPrice(50.00m)
                     .Build(),
                 Builders.TestDataBuilder.InvoiceLine()
-                    .WithInvoiceNumber("INV-002")
-                    .WithStockCode("STOCK002")
+                    .WithInvoiceId(2)
+                    .WithStockNo(2)
                     .WithQuantity(3)
                     .WithUnitPrice(75.00m)
                     .Build()
@@ -165,18 +165,18 @@ namespace HSS.ERP.API.Tests.Fixtures
             var bookings = new[]
             {
                 Builders.TestDataBuilder.Booking()
-                    .WithId(1)
+                    .WithNo(1)
                     .WithCustomerCode("CUST001")
-                    .WithCourseCode("COURSE001")
-                    .WithStatus("CONFIRMED")
-                    .WithDelegates(2)
+                    .WithOrder("COURSE001")
+                    .WithStatus("C")
+                    .WithContact("John Doe")
                     .Build(),
                 Builders.TestDataBuilder.Booking()
-                    .WithId(2)
+                    .WithNo(2)
                     .WithCustomerCode("CUST002")
-                    .WithCourseCode("COURSE002")
-                    .WithStatus("PENDING")
-                    .WithDelegates(5)
+                    .WithOrder("COURSE002")
+                    .WithStatus("D")
+                    .WithContact("Jane Smith")
                     .Build()
             };
 
@@ -195,7 +195,7 @@ namespace HSS.ERP.API.Tests.Fixtures
             context.Invoices.RemoveRange(context.Invoices);
             context.Bookings.RemoveRange(context.Bookings);
             context.Courses.RemoveRange(context.Courses);
-            context.Stock.RemoveRange(context.Stock);
+            context.Stocks.RemoveRange(context.Stocks);
             context.Customers.RemoveRange(context.Customers);
             context.SaveChanges();
         }
