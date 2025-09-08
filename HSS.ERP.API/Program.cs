@@ -148,3 +148,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Make the Program class internal for integration testing (visible to test assembly)
+internal partial class Program { }
