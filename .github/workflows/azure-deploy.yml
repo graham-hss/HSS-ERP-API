@@ -31,23 +31,25 @@ jobs:
     - name: Build application
       run: dotnet build HSS.ERP.API.sln --configuration Release --no-restore
 
-    - name: Run tests
-      run: dotnet test HSS.ERP.API.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
-
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-results
-        path: |
-          **/TestResults/**/*
-          **/coverage.cobertura.xml
+    # Skip tests as there are no test projects in the current solution
+    # Uncomment when test projects are added:
+    # - name: Run tests
+    #   run: dotnet test HSS.ERP.API.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+    
+    # - name: Upload test results
+    #   uses: actions/upload-artifact@v4
+    #   if: always()
+    #   with:
+    #     name: test-results
+    #     path: |
+    #       **/TestResults/**/*
+    #       **/coverage.cobertura.xml
 
     - name: Publish application
       run: dotnet publish ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/HSS.ERP.API.csproj --configuration Release --output ./publish
 
     - name: Upload artifact for deployment job
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dotnet-app
         path: ./publish
@@ -60,12 +62,12 @@ jobs:
 
     steps:
     - name: Download artifact from build job
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: dotnet-app
 
     - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
+      uses: azure/webapps-deploy@v3
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
@@ -76,19 +78,19 @@ jobs:
         echo "Waiting for application to start..."
         sleep 30
         
-        # Health check endpoint
+        # Health check endpoint (corrected path)
         HEALTH_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health"
         
         for i in {1..5}; do
           echo "Health check attempt $i..."
           if curl -f -s "$HEALTH_URL" > /dev/null; then
-            echo "✅ Application is healthy!"
+            echo "Application is healthy!"
             break
           elif [ $i -eq 5 ]; then
-            echo "❌ Application health check failed after 5 attempts"
+            echo "Application health check failed after 5 attempts"
             exit 1
           else
-            echo "⏳ Health check failed, retrying in 15 seconds..."
+            echo "Health check failed, retrying in 15 seconds..."
             sleep 15
           fi
         done
@@ -99,11 +101,19 @@ jobs:
         
         # Test Swagger endpoint
         echo "Testing Swagger endpoint..."
-        curl -f -s "$BASE_URL/swagger/index.html" > /dev/null && echo "✅ Swagger is accessible" || echo "⚠️  Swagger endpoint not accessible"
+        if curl -f -s "$BASE_URL/swagger/index.html" > /dev/null; then
+          echo "Swagger is accessible"
+        else
+          echo "Warning: Swagger endpoint not accessible"
+        fi
         
-        # Test API endpoints that don't require authentication
-        echo "Testing API endpoints..."
-        curl -f -s "$BASE_URL/api/health" > /dev/null && echo "✅ Health API is accessible" || echo "⚠️  Health API not accessible"
+        # Test health endpoint (correct path)
+        echo "Testing health endpoint..."
+        if curl -f -s "$BASE_URL/health" > /dev/null; then
+          echo "Health endpoint is accessible"
+        else
+          echo "Warning: Health endpoint not accessible"
+        fi
 
   security-scan:
     runs-on: ubuntu-latest
@@ -114,18 +124,30 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Run Security Scan
-      uses: securecodewarrior/github-action-add-sarif@v1
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
       with:
-        sarif-file: 'security-scan-results.sarif'
-      continue-on-error: true
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    # Use GitHub Security tab's CodeQL analysis instead of external security scan
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
 
     - name: Dependency Check
       run: |
+        dotnet restore HSS.ERP.API.sln
         dotnet list HSS.ERP.API.sln package --outdated --include-transitive > outdated-packages.txt || true
         if [ -s outdated-packages.txt ]; then
-          echo "⚠️  Outdated packages found:"
+          echo "Warning: Outdated packages found:"
           cat outdated-packages.txt
         else
-          echo "✅ All packages are up to date"
+          echo "All packages are up to date"
         fi
